@@ -1,0 +1,1110 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import brandLogo from './thhg_happy_hunting_grounds_logo.jpeg';
+import aprilRuffle  from './IMG_0701.JPG';
+import aprilSleeping from './IMG_2611.JPG';
+import aprilCuddle  from './IMG_5128.JPG';
+const aprilVideo = new URL('./IMG_3715.MOV', import.meta.url).href;
+
+const NAV_ITEMS = [
+  { id: 'home',          label: 'Home' },
+  { id: 'our-story',     label: 'Our Story' },
+  { id: 'shop',          label: 'Shop' },
+  { id: 'apparel',       label: 'Apparel' },
+  { id: 'product',       label: 'Munchables' },
+  { id: 'lives-changed', label: 'Lives Changed' },
+  { id: 'contact',       label: 'Contact' },
+];
+
+// ─── Styles ────────────────────────────────────────────────────────────────────
+
+function FontStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Oswald:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Rye&display=swap');
+
+      .thhg-rye         { font-family: 'Rye', serif; }
+      .thhg-oswald      { font-family: 'Oswald', sans-serif; }
+      .thhg-baskerville { font-family: 'Libre Baskerville', serif; }
+
+      .thhg-logo-pop    { animation: thhgLogoPop  5.5s ease-in-out infinite; }
+      .thhg-hero-card   { animation: thhgFloat    6s   ease-in-out infinite; }
+      .thhg-marquee     { animation: thhgMarquee  30s  linear     infinite; }
+
+      .thhg-star-pop span                  { animation: thhgTwinkle 1.9s ease-in-out infinite; }
+      .thhg-star-pop span:nth-child(2)     { animation-delay: 0.25s; }
+      .thhg-star-pop span:nth-child(3)     { animation-delay: 0.5s;  }
+
+      .thhg-shine { position: relative; overflow: hidden; }
+      .thhg-shine::after {
+        content: '';
+        position: absolute;
+        inset: 0 0 0 -45%;
+        width: 35%;
+        transform: skewX(-18deg);
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.34), transparent);
+        animation: thhgShine 3.6s ease-in-out infinite;
+      }
+
+      .thhg-card {
+        transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+      }
+      .thhg-card:hover {
+        transform: translateY(-8px);
+        border-color: #B5282A;
+        box-shadow: 0 24px 58px rgba(15,26,46,0.16);
+      }
+
+      .thhg-mobile-nav {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 320ms ease, opacity 320ms ease;
+        opacity: 0;
+      }
+      .thhg-mobile-nav.open {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .thhg-mobile-nav > div { overflow: hidden; }
+
+      @keyframes thhgLogoPop {
+        0%, 100% { transform: scale(1)     rotate(0deg); }
+        45%       { transform: scale(1.055) rotate(-2deg); }
+        60%       { transform: scale(1.035) rotate(2deg); }
+      }
+      @keyframes thhgFloat {
+        0%, 100% { transform: translateY(0);    }
+        50%       { transform: translateY(-10px); }
+      }
+      @keyframes thhgTwinkle {
+        0%, 100% { opacity: 0.45; transform: scale(0.86); }
+        50%       { opacity: 1;    transform: scale(1.12); }
+      }
+      @keyframes thhgMarquee {
+        from { transform: translateX(0);    }
+        to   { transform: translateX(-50%); }
+      }
+      @keyframes thhgShine {
+        0%, 45%   { left: -45%; }
+        70%, 100% { left: 120%; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .thhg-logo-pop, .thhg-hero-card,
+        .thhg-star-pop span, .thhg-marquee,
+        .thhg-shine::after { animation: none; }
+        .thhg-card:hover   { transform: none; }
+      }
+    `}</style>
+  );
+}
+
+// ─── Shell ─────────────────────────────────────────────────────────────────────
+
+function SiteShell({ currentPage, navigate, children }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const go = useCallback((id) => {
+    navigate(id);
+    setMenuOpen(false);
+  }, [navigate]);
+
+  return (
+    <div className="min-h-screen bg-[#F5EDD8] text-[#1C1510]">
+      <FontStyles />
+
+      <header className="sticky top-0 z-50 border-b-[3px] border-[#C8882A] bg-[#0F1A2E]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+
+          <button onClick={() => go('home')} className="flex items-center gap-3 text-left">
+            <div className="thhg-logo-pop h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-[#C8882A] bg-[#F5EDD8]">
+              <img src={brandLogo} alt="The Happy Hunting Grounds" className="h-full w-full object-cover" />
+            </div>
+            <div>
+              <div className="thhg-rye text-sm text-[#F5EDD8] sm:text-base">The Happy Hunting Grounds</div>
+              <div className="thhg-oswald mt-0.5 text-[10px] uppercase tracking-[0.28em] text-[#C8882A] sm:text-[11px]">
+                Good vibes save lives
+              </div>
+            </div>
+          </button>
+
+          <nav className="hidden items-center gap-6 xl:flex" aria-label="Primary navigation">
+            {NAV_ITEMS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => go(id)}
+                className={`thhg-oswald text-sm uppercase tracking-[0.14em] transition ${
+                  currentPage === id ? 'text-[#E8A83A]' : 'text-[#F5EDD8] hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => go('shop')}
+              className="thhg-shine thhg-oswald rounded-sm border border-white/10 bg-[#B5282A] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#F5EDD8] transition hover:-translate-y-0.5"
+            >
+              Shop now
+            </button>
+
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              className="xl:hidden flex flex-col justify-center gap-[5px] p-2"
+            >
+              <span className={`block h-0.5 w-6 bg-[#F5EDD8] transition-all origin-center ${menuOpen ? 'translate-y-[7px] rotate-45' : ''}`} />
+              <span className={`block h-0.5 w-6 bg-[#F5EDD8] transition-opacity ${menuOpen ? 'opacity-0' : ''}`} />
+              <span className={`block h-0.5 w-6 bg-[#F5EDD8] transition-all origin-center ${menuOpen ? '-translate-y-[7px] -rotate-45' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        <div className={`thhg-mobile-nav xl:hidden border-t border-white/10 bg-[#0F1A2E] ${menuOpen ? 'open' : ''}`}>
+          <div>
+            <div className="mx-auto flex flex-col px-4 py-2 sm:px-6">
+              {NAV_ITEMS.map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => go(id)}
+                  className={`thhg-oswald border-b border-white/5 py-3 text-left text-sm uppercase tracking-[0.18em] ${
+                    currentPage === id ? 'text-[#E8A83A]' : 'text-[#F5EDD8]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main id="main-content">{children}</main>
+
+      <footer className="border-t-[3px] border-[#C8882A] bg-[#0F1A2E] px-4 py-14 text-[#F5EDD8] sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.4fr_0.6fr]">
+          <div>
+            <div className="flex items-center gap-4">
+              <div className="thhg-logo-pop h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-[#C8882A] bg-[#F5EDD8]">
+                <img src={brandLogo} alt="The Happy Hunting Grounds" className="h-full w-full object-cover" />
+              </div>
+              <div className="thhg-rye text-3xl">The Happy Hunting Grounds</div>
+            </div>
+            <p className="thhg-baskerville mt-4 max-w-xl text-sm leading-8 text-[#E7D9BE]">
+              Built from rescue, healing, and second chances. Every purchase funds shelter dogs, supports veterans,
+              and keeps April's spirit moving forward in the world.
+            </p>
+            <p className="thhg-oswald mt-5 text-[11px] uppercase tracking-[0.2em] text-[#C8882A]">
+              © {new Date().getFullYear()} The Happy Hunting Grounds · Good vibes save lives
+            </p>
+          </div>
+          <nav className="grid grid-cols-2 content-start gap-3" aria-label="Footer navigation">
+            {NAV_ITEMS.map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => go(id)}
+                className="thhg-oswald text-left text-xs uppercase tracking-[0.18em] text-[#D4B483] transition hover:text-white"
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ─── Shared UI ─────────────────────────────────────────────────────────────────
+
+function PageHero({ eyebrow, title, subtitle, badge }) {
+  return (
+    <section className="relative overflow-hidden bg-[#0F1A2E]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(200,136,42,0.16),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(181,40,42,0.18),transparent_32%)]" />
+      <img
+        src={brandLogo}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full object-cover opacity-[0.06] grayscale lg:h-96 lg:w-96"
+      />
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-20">
+        <div className="relative z-10">
+          <div className="thhg-oswald mb-5 inline-flex items-center gap-3 bg-[#1B2A4A] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.22em] text-[#F5EDD8]">
+            <span className="text-[#B5282A]">★</span>
+            {eyebrow}
+            <span className="text-[#B5282A]">★</span>
+          </div>
+          <h1 className="thhg-rye max-w-2xl text-4xl leading-[1.08] text-[#F5EDD8] sm:text-5xl lg:text-6xl">
+            {title}
+          </h1>
+          <div className="mt-6 flex max-w-xl items-center gap-3 text-[#B5282A]">
+            <div className="h-[2px] flex-1 bg-[#B5282A]/35" />
+            <span className="text-sm">★</span>
+            <div className="h-[2px] flex-1 bg-[#B5282A]/35" />
+          </div>
+          <p className="thhg-baskerville mt-6 max-w-xl text-base leading-8 text-[#E7D9BE] sm:text-lg">
+            {subtitle}
+          </p>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center">
+          <div className="thhg-hero-card w-full max-w-sm border-[3px] border-[#C8882A] bg-[#F5EDD8] p-4 shadow-[0_16px_60px_rgba(0,0,0,0.35)]">
+            <div className="bg-[linear-gradient(160deg,#1B2A4A,#162038)] p-5">
+              <div className="flex flex-col items-center border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-6 text-center">
+                <div className="thhg-star-pop flex justify-center gap-2 text-[#C8882A]">
+                  <span>★</span><span>★</span><span>★</span>
+                </div>
+                <div className="thhg-logo-pop mx-auto mt-4 h-28 w-28 overflow-hidden rounded-full border-[3px] border-[#C8882A] bg-[#F5EDD8]">
+                  <img src={brandLogo} alt="" className="h-full w-full object-cover" />
+                </div>
+                <div className="thhg-rye mt-4 text-xl text-[#F5EDD8]">The Happy Hunting Grounds</div>
+                <div className="thhg-rye mt-1 text-lg text-[#B5282A]">{badge.title}</div>
+                <div className="mt-4 w-full border-t-4 border-[#C8882A] bg-[#F5EDD8] p-4">
+                  <div className="thhg-oswald text-[10px] uppercase tracking-[0.25em] text-[#1B2A4A]">{badge.eyebrow}</div>
+                  <div className="thhg-rye mt-2 text-xl text-[#1B2A4A]">{badge.highlight}</div>
+                  <p className="thhg-baskerville mt-2 text-xs leading-6 text-[#4A3822]">{badge.copy}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MarqueeBand({ items }) {
+  const track = useMemo(() => [...items, ...items, ...items, ...items], [items]);
+  return (
+    <div className="overflow-hidden border-y-2 border-[#B5282A] bg-[#C8882A] py-3" aria-hidden="true">
+      <div className="thhg-marquee flex w-max items-center gap-x-6">
+        {track.map((item, i) => (
+          <div key={i} className="thhg-rye flex shrink-0 items-center gap-4 text-sm text-[#0F1A2E] sm:text-[15px]">
+            <span>{item}</span>
+            <span className="text-[#B5282A]">★</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title, copy }) {
+  return (
+    <div className="max-w-3xl">
+      <div className="thhg-oswald text-xs uppercase tracking-[0.28em] text-[#B5282A]">{eyebrow}</div>
+      <h2 className="thhg-rye mt-4 text-3xl text-[#1B2A4A] sm:text-4xl">{title}</h2>
+      {copy && <p className="thhg-baskerville mt-5 text-base leading-8 text-[#4A3822]">{copy}</p>}
+    </div>
+  );
+}
+
+function CardGrid({ items, dark = false }) {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <article
+          key={item.title}
+          className={`thhg-card overflow-hidden border shadow-[0_14px_40px_rgba(15,26,46,0.07)] ${
+            dark ? 'border-white/10 bg-white/5' : 'border-[#D4B483] bg-white'
+          }`}
+        >
+          <div className={`border-b-[3px] border-[#C8882A] p-6 ${
+            dark ? 'bg-[linear-gradient(160deg,#20345a,#152340)]' : 'bg-[linear-gradient(160deg,#0F1A2E,#1B2A4A)]'
+          }`}>
+            <div className={`thhg-oswald text-[11px] uppercase tracking-[0.25em] ${dark ? 'text-[#D4B483]' : 'text-[#E8A83A]'}`}>
+              {item.eyebrow}
+            </div>
+            <div className="thhg-rye mt-3 text-3xl leading-tight text-[#F5EDD8]">{item.title}</div>
+          </div>
+          <div className="p-6">
+            <p className={`thhg-baskerville text-sm leading-7 ${dark ? 'text-[#E7D9BE]' : 'text-[#4A3822]'}`}>
+              {item.copy}
+            </p>
+            {item.cta && (
+              <button
+                onClick={item.onCta}
+                className={`thhg-shine thhg-oswald mt-5 px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] ${
+                  dark ? 'bg-[#C8882A] text-[#0F1A2E]' : 'bg-[#B5282A] text-[#F5EDD8]'
+                }`}
+              >
+                {item.cta}
+              </button>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function StatCard({ value, label }) {
+  return (
+    <div className="border border-[#D4B483] bg-white p-6 shadow-[0_10px_30px_rgba(15,26,46,0.05)]">
+      <div className="thhg-rye text-4xl text-[#B5282A]">{value}</div>
+      <div className="thhg-oswald mt-2 text-[11px] uppercase tracking-[0.18em] text-[#4A3822]">{label}</div>
+    </div>
+  );
+}
+
+// ─── Pages ─────────────────────────────────────────────────────────────────────
+
+function HomePage({ navigate }) {
+  const [email, setEmail]   = useState('');
+  const [joined, setJoined] = useState(false);
+
+  const handleJoin = (e) => {
+    e.preventDefault();
+    if (email.trim()) setJoined(true);
+  };
+
+  const pillars = useMemo(() => [
+    {
+      eyebrow: 'Pillar one',
+      title: 'Rescue first',
+      copy: 'A portion of every order funds shelter essentials — beds, enrichment toys, vet care, and foster support for dogs waiting on their second chance.',
+      cta: 'See impact', onCta: () => navigate('lives-changed'),
+    },
+    {
+      eyebrow: 'Pillar two',
+      title: 'Healing through dogs',
+      copy: 'Dogs heal people. Veterans. Grieving families. Survivors. Our mission actively supports programs that put dogs in the lives of people who need them most.',
+      cta: 'Our story', onCta: () => navigate('our-story'),
+    },
+    {
+      eyebrow: 'Pillar three',
+      title: 'Full transparency',
+      copy: 'Every dollar donated is documented. Every rescue spotlighted. Every bed sponsored is shown. We show the receipts because accountability is how real community is built.',
+      cta: 'View updates', onCta: () => navigate('lives-changed'),
+    },
+  ], [navigate]);
+
+  const shopCards = useMemo(() => [
+    {
+      eyebrow: 'Apparel',
+      title: 'Second Chance Collection',
+      copy: 'Bold heritage-style pieces that carry the mission on their sleeve. Hoodies, tees, and caps for the tribe.',
+      cta: 'Shop apparel', onCta: () => navigate('apparel'),
+    },
+    {
+      eyebrow: 'For the dogs',
+      title: 'Munchables',
+      copy: 'Single-ingredient, all-natural treats for good dogs everywhere. Made with intention. Sold with purpose.',
+      cta: 'Shop treats', onCta: () => navigate('product'),
+    },
+    {
+      eyebrow: 'Healing story',
+      title: 'The THHG Book',
+      copy: 'A story for every family who has loved and lost a dog. Written from the heart. Illustrated with warmth.',
+      cta: 'View the book', onCta: () => navigate('shop'),
+    },
+  ], [navigate]);
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Saving lives on both ends of the leash"
+        title="Built from love, loss, rescue, and a tribe that believes shopping should mean something."
+        subtitle="The Happy Hunting Grounds is where second chances are celebrated, shelter dogs find voices, and every purchase does more than just arrive at your door."
+        badge={{
+          title: 'Shop With Purpose',
+          eyebrow: 'Brand promise',
+          highlight: 'Good vibes save lives',
+          copy: '25% minimum of every purchase goes directly back to rescue, shelter support, and veteran healing.',
+        }}
+      />
+
+      <MarqueeBand items={['Your vibe attracts your tribe', 'Second chances', 'Built on transparency', 'Community over clout', 'Good vibes save lives']} />
+
+      {/* Mission pillars */}
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <SectionHeader
+              eyebrow="Why we exist"
+              title="A brand rooted in second chances."
+              copy="We started because a dog named April changed everything — and losing her made us want to keep that love moving forward in the world."
+            />
+          </div>
+          <CardGrid items={pillars} />
+        </div>
+      </section>
+
+      {/* Story teaser + stats */}
+      <section className="bg-[#F5EDD8] py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+          <div className="border-t-4 border-[#C8882A] bg-white p-8 shadow-[0_18px_50px_rgba(15,26,46,0.08)]">
+            <div className="thhg-oswald text-xs uppercase tracking-[0.28em] text-[#B5282A]">Our story</div>
+            <h2 className="thhg-rye mt-4 text-3xl leading-tight text-[#1B2A4A] sm:text-4xl">Before the brand, there was April.</h2>
+            <p className="thhg-baskerville mt-6 text-base leading-8 text-[#4A3822]">
+              April was a rescue dog who healed a family and built the soul of everything you see here.
+              When she passed, the grief was real — but so was the decision to honor her by helping other
+              dogs, other families, and other people who needed exactly what she gave us.
+            </p>
+            <blockquote className="thhg-baskerville mt-6 border-l-[3px] border-[#B5282A] pl-4 text-[15px] italic leading-8 text-[#4A3822]">
+              "We didn't build this to become a brand. We built it because the love was too big to stay quiet."
+            </blockquote>
+            <button
+              onClick={() => navigate('our-story')}
+              className="thhg-oswald mt-6 bg-[#1B2A4A] px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#F5EDD8]"
+            >
+              Read our story →
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2 overflow-hidden shadow-[0_18px_50px_rgba(15,26,46,0.10)]">
+              <img src={aprilCuddle} alt="April and Franco" className="h-64 w-full object-cover object-top" />
+            </div>
+            <div className="overflow-hidden shadow-[0_10px_30px_rgba(15,26,46,0.08)]">
+              <img src={aprilRuffle} alt="April" className="h-48 w-full object-cover object-top" />
+            </div>
+            <div className="overflow-hidden shadow-[0_10px_30px_rgba(15,26,46,0.08)]">
+              <img src={aprilSleeping} alt="April resting" className="h-48 w-full object-cover" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Shop preview */}
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <SectionHeader eyebrow="Shop with purpose" title="Every product carries the mission." />
+            <button
+              onClick={() => navigate('shop')}
+              className="thhg-oswald shrink-0 border-2 border-[#1B2A4A] px-5 py-3 text-sm uppercase tracking-[0.18em] text-[#1B2A4A] transition hover:-translate-y-0.5"
+            >
+              Browse all →
+            </button>
+          </div>
+          <CardGrid items={shopCards} />
+        </div>
+      </section>
+
+      {/* Impact band */}
+      <section className="border-y-[3px] border-[#C8882A] bg-[#1B2A4A] py-20 text-[#F5EDD8]">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeader
+            eyebrow="Where it goes"
+            title="Your purchase does more than ship to your door."
+            copy="We document every donation, every rescue spotlight, every wobbler purchased and bed sponsored. You should know exactly what your support is doing in the world."
+          />
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            {[
+              { stat: 'Shelter beds',    copy: 'Sponsored directly through product sales for dogs waiting on adoption.' },
+              { stat: 'Enrichment toys', copy: 'Wobblers and enrichment tools donated to keep shelter dogs mentally healthy.' },
+              { stat: 'Veteran support', copy: 'Programs connecting veterans with rescue dogs as part of healing-focused initiatives.' },
+            ].map(({ stat, copy }) => (
+              <div key={stat} className="border border-white/10 bg-white/5 p-6">
+                <div className="thhg-rye text-2xl text-[#E8A83A]">★</div>
+                <div className="thhg-rye mt-3 text-2xl text-[#F5EDD8]">{stat}</div>
+                <p className="thhg-baskerville mt-3 text-sm leading-7 text-[#C8C0B0]">{copy}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => navigate('lives-changed')}
+            className="thhg-shine thhg-oswald mt-10 border-2 border-[#C8882A] px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#F5EDD8] transition hover:-translate-y-0.5"
+          >
+            See the full impact →
+          </button>
+        </div>
+      </section>
+
+      {/* Email capture */}
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden border border-[#D4B483] bg-white shadow-[0_20px_60px_rgba(15,26,46,0.08)]">
+            <div className="grid lg:grid-cols-2">
+              <div className="border-t-4 border-[#C8882A] bg-[#F5EDD8] p-8 sm:p-10">
+                <div className="thhg-oswald text-xs uppercase tracking-[0.28em] text-[#B5282A]">Stay connected</div>
+                <h2 className="thhg-rye mt-4 text-3xl text-[#1B2A4A] sm:text-4xl">Join the pack.</h2>
+                <p className="thhg-baskerville mt-4 text-sm leading-7 text-[#4A3822]">
+                  Updates on new products, rescue spotlights, and what your purchases are actually doing in the world. No fluff. Just mission.
+                </p>
+                {joined ? (
+                  <p className="thhg-rye mt-8 text-2xl text-[#1B2A4A]">Welcome to the pack. ★</p>
+                ) : (
+                  <form onSubmit={handleJoin} className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email address"
+                      required
+                      className="thhg-baskerville min-w-0 flex-1 border border-[#D4B483] bg-white px-5 py-3 text-sm text-[#1C1510] outline-none placeholder:text-[#7a6750] focus:border-[#1B2A4A]"
+                    />
+                    <button
+                      type="submit"
+                      className="thhg-oswald shrink-0 bg-[#B5282A] px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#F5EDD8]"
+                    >
+                      Join the pack
+                    </button>
+                  </form>
+                )}
+              </div>
+              <div className="bg-[#0F1A2E] p-8 sm:p-10 text-[#F5EDD8]">
+                <div className="thhg-oswald text-xs uppercase tracking-[0.28em] text-[#E8A83A]">What you'll get</div>
+                <ul className="mt-6 space-y-5">
+                  {[
+                    'New drop announcements before they go public.',
+                    'Monthly rescue spotlights showing exactly where your support went.',
+                    'Behind-the-scenes stories from the brand and the mission.',
+                    'Early access to seasonal fundraising campaigns.',
+                  ].map((item) => (
+                    <li key={item} className="flex gap-3">
+                      <span className="thhg-rye shrink-0 text-[#C8882A]">★</span>
+                      <span className="thhg-baskerville text-sm leading-7 text-[#E7D9BE]">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function OurStoryPage({ navigate }) {
+  return (
+    <>
+      <PageHero
+        eyebrow="Our story"
+        title="Before the brand, there was a dog named April."
+        subtitle="She came to us as a rescue, changed everything about how we saw the world, and left us with a mission we couldn't ignore. This is how love became a purpose."
+        badge={{
+          title: 'Our Story',
+          eyebrow: 'Built from purpose',
+          highlight: 'From grief to good',
+          copy: "The Happy Hunting Grounds is named after the place dogs go when they leave us — and built to honor them while they're still here.",
+        }}
+      />
+      <MarqueeBand items={['April', 'Healing', 'Rescue', 'Second chances', 'Good vibes save lives']} />
+
+      {/* April photo gallery */}
+      <section className="bg-[#0F1A2E]">
+        <div className="grid sm:grid-cols-3">
+          {[
+            { src: aprilRuffle,   alt: 'April in her red ruffle' },
+            { src: aprilCuddle,   alt: 'April and Franco' },
+            { src: aprilSleeping, alt: 'April at rest' },
+          ].map(({ src, alt }) => (
+            <div key={alt} className="aspect-square overflow-hidden">
+              <img src={src} alt={alt} className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+          <div className="border-t-4 border-[#C8882A] bg-[#F5EDD8] p-8 shadow-[0_20px_60px_rgba(15,26,46,0.08)]">
+            <SectionHeader
+              eyebrow="How it started"
+              title="Before the brand, there was love."
+              copy="April was a rescue who came into a life that needed her. She gave companionship, healing, and joy in a season that needed all three. When she passed, the grief was real — but so was the clarity about what to do next."
+            />
+            <p className="thhg-baskerville mt-6 text-base leading-8 text-[#4A3822]">
+              The Happy Hunting Grounds is named after the place dogs go when they leave us. Building this brand was
+              a way to honor April by helping other dogs find the second chances she gave us. Every purchase, every
+              product, every rescue spotlight carries her forward.
+            </p>
+            <blockquote className="thhg-baskerville mt-6 border-l-[3px] border-[#B5282A] pl-4 text-[15px] italic leading-8 text-[#4A3822]">
+              "We didn't build this to become a brand. We built it because the love was too big to stay quiet."
+            </blockquote>
+            <button
+              onClick={() => navigate('shop')}
+              className="thhg-oswald mt-6 bg-[#1B2A4A] px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#F5EDD8]"
+            >
+              Shop with purpose →
+            </button>
+          </div>
+
+          <div className="grid content-start gap-5">
+            {[
+              { value: 'April',     label: 'The heart behind the name' },
+              { value: 'Rescue',    label: 'Every dog deserves a second chance' },
+              { value: 'Healing',   label: 'Dogs heal people. Always have.' },
+              { value: 'Community', label: 'Your tribe is already here' },
+            ].map(({ value, label }) => (
+              <div key={label} className="border border-[#D4B483] bg-white p-6 shadow-[0_10px_30px_rgba(15,26,46,0.05)]">
+                <div className="thhg-rye text-3xl text-[#B5282A]">{value}</div>
+                <div className="thhg-oswald mt-2 text-xs uppercase tracking-[0.2em] text-[#4A3822]">{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#F5EDD8] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <CardGrid
+            items={[
+              {
+                eyebrow: 'Chapter one',
+                title: 'Love',
+                copy: "April arrived as a rescue and stayed as the foundation of everything. She showed what a second chance can become when someone decides to show up.",
+              },
+              {
+                eyebrow: 'Chapter two',
+                title: 'Loss',
+                copy: "When April passed, the grief was the kind that doesn't leave. But grief rooted in real love has direction — and this brand is the direction ours took.",
+              },
+              {
+                eyebrow: 'Chapter three',
+                title: 'Purpose',
+                copy: "The mission became the answer to loss: help more dogs, support more rescues, and fund the kind of healing that only dogs can give to people who need it most.",
+              },
+            ]}
+          />
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ShopPage({ navigate }) {
+  const collections = useMemo(() => [
+    { eyebrow: 'Apparel',  title: 'Second Chance Collection', copy: 'Heritage-style hoodies, tees, and caps that carry the mission on their sleeve. Every piece tells the story.', cta: 'View collection', onCta: () => navigate('apparel') },
+    { eyebrow: 'Treats',   title: 'Munchables',               copy: 'Single-ingredient, all-natural treats for good dogs. Made with care. Sold with purpose.',                      cta: 'Shop treats',     onCta: () => navigate('product') },
+    { eyebrow: 'Story',    title: 'The THHG Book',            copy: 'A story written for every family who has loved and lost a dog. Warm, honest, and illustrated with heart.',      cta: 'View the book',   onCta: () => navigate('our-story') },
+    { eyebrow: 'Mission',  title: 'Rescue Taws',              copy: 'A product line built to let people support shelter enrichment while getting something meaningful in return.',    cta: 'Explore',         onCta: () => navigate('shop') },
+    { eyebrow: 'Seasonal', title: 'Featured Donations',       copy: 'Seasonal fundraising for urgent shelter needs — wobblers, beds, vet care, and more.',                           cta: 'Support now',     onCta: () => navigate('lives-changed') },
+    { eyebrow: 'Bundles',  title: 'Gift With Purpose',        copy: 'Packages built for gift-givers who want their purchase to do more than just wrap nicely.',                       cta: 'See bundles',     onCta: () => navigate('shop') },
+  ], [navigate]);
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Shop with purpose"
+        title="Every product carries the mission forward."
+        subtitle="Six collections. One mission. Whether you're shopping for yourself, a dog, or someone who loves both — every purchase here goes further than most."
+        badge={{
+          title: 'The Shop',
+          eyebrow: 'Storefront',
+          highlight: 'Purpose in every order',
+          copy: '25% minimum of every sale goes back to rescue, shelter support, and healing-focused programs.',
+        }}
+      />
+      <MarqueeBand items={['Apparel', 'Treats', 'Books', 'Bundles', 'Mission-driven']} />
+      <section className="bg-[#F5EDD8] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10">
+            <SectionHeader
+              eyebrow="All collections"
+              title="Shop by what moves you."
+              copy="From apparel to treats to the book that started it all — every collection is built around the mission."
+            />
+          </div>
+          <CardGrid items={collections} />
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ApparelPage() {
+  const products = [
+    {
+      eyebrow: 'Best seller',
+      title: 'Good Vibes Save Lives Tee',
+      copy: 'The signature line, on the signature piece. Heavyweight cotton, vintage-washed feel, and a message the whole tribe can wear.',
+      cta: 'Choose options',
+    },
+    {
+      eyebrow: 'Best seller',
+      title: 'Your Vibe Attracts Your Tribe Hoodie',
+      copy: 'The flagship pullover. Built for the person who finds their people through what they believe, not just where they live.',
+      cta: 'Choose options',
+    },
+    {
+      eyebrow: 'Best seller',
+      title: 'Second Chances Hat',
+      copy: 'A clean, mission-forward cap that carries the brand without saying everything at once.',
+      cta: 'Choose options',
+    },
+  ];
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Second Chance Apparel"
+        title="Wear the mission. Build the tribe."
+        subtitle="Heritage-inspired pieces that feel like the culture behind them. Bold, built to last, and rooted in a story worth wearing."
+        badge={{
+          title: 'Apparel',
+          eyebrow: 'Wear the mission',
+          highlight: 'Second Chance Collection',
+          copy: 'Every piece carries the brand voice, the vintage styling, and a portion goes back to rescue.',
+        }}
+      />
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeader
+            eyebrow="Current drop"
+            title="Merch built for the tribe."
+            copy="These aren't just shirts. They're a statement — second chances, real community, and good vibes that actually save lives."
+          />
+          <div className="mt-10 grid max-w-5xl gap-4 sm:grid-cols-3">
+            {[
+              { value: '01', label: 'Hero Hoodie' },
+              { value: '02', label: 'Graphic Tee' },
+              { value: '03', label: 'Tribe Cap' },
+            ].map((s) => <StatCard key={s.label} {...s} />)}
+          </div>
+          <div className="mt-10">
+            <CardGrid items={products} />
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ProductPage() {
+  const [qtys, setQtys] = useState(() => Object.fromEntries(MUNCHABLES_LINE.map((p) => [p.name, 1])));
+  const adjustQty = (name, fn) => setQtys((prev) => ({ ...prev, [name]: fn(prev[name]) }));
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Munchables by THHG"
+        title="The complete treat line. One ingredient. Zero compromise."
+        subtitle="Six flavors. All-natural, single-ingredient treats made for good dogs and owners who read the label. Every bag sold puts 25% back into rescue."
+        badge={{
+          title: 'Munchables',
+          eyebrow: 'The treat line',
+          highlight: 'Single ingredient',
+          copy: 'Duck, chicken, turkey, beef, salmon, sweet potato. Nothing else. Ever.',
+        }}
+      />
+      <MarqueeBand items={['Quackers', 'Cluckers', 'Gobbler', 'Mooers', 'Swimmer', 'Rooters', 'Single ingredient. Always.']} />
+
+      <section className="bg-[#F5EDD8] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10">
+            <SectionHeader
+              eyebrow="The full line"
+              title="Six flavors. All good dogs qualify."
+              copy="Every Munchables treat is one ingredient — nothing added, nothing hidden. Sourced with the same intention that drives everything we make."
+            />
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {MUNCHABLES_LINE.map(({ name, ingredient, copy, tags }) => (
+              <article key={name} className="thhg-card overflow-hidden border border-[#D4B483] bg-white shadow-[0_14px_40px_rgba(15,26,46,0.07)]">
+                <div className="border-b-[3px] border-[#C8882A] bg-[linear-gradient(160deg,#0F1A2E,#1B2A4A)] p-6">
+                  <div className="thhg-oswald text-[11px] uppercase tracking-[0.25em] text-[#E8A83A]">{ingredient}</div>
+                  <div className="thhg-rye mt-2 text-3xl leading-tight text-[#F5EDD8]">{name}</div>
+                  <div className="mt-4 flex items-center justify-center rounded-sm bg-white/5 py-5">
+                    <div className="thhg-logo-pop h-20 w-20 overflow-hidden rounded-full border-[3px] border-[#C8882A] bg-[#F5EDD8]">
+                      <img src={brandLogo} alt={`${name} treats`} className="h-full w-full object-cover" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <p className="thhg-baskerville text-sm leading-7 text-[#4A3822]">{copy}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {tags.map((t) => (
+                      <span key={t} className="thhg-oswald rounded-sm border border-[#D4B483] px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-[#4A3822]">{t}</span>
+                    ))}
+                  </div>
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="flex items-center border border-[#D4B483]">
+                      <button
+                        onClick={() => adjustQty(name, (q) => Math.max(1, q - 1))}
+                        aria-label={`Decrease ${name} quantity`}
+                        className="thhg-oswald px-3 py-2 text-[#1B2A4A] hover:bg-[#F5EDD8]"
+                      >−</button>
+                      <span className="thhg-oswald min-w-[2rem] px-3 py-2 text-center text-sm text-[#1B2A4A]">{qtys[name]}</span>
+                      <button
+                        onClick={() => adjustQty(name, (q) => q + 1)}
+                        aria-label={`Increase ${name} quantity`}
+                        className="thhg-oswald px-3 py-2 text-[#1B2A4A] hover:bg-[#F5EDD8]"
+                      >+</button>
+                    </div>
+                    <button className="thhg-shine thhg-oswald flex-1 bg-[#B5282A] py-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#F5EDD8]">
+                      Add to cart
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <p className="thhg-baskerville mt-10 text-center text-xs text-[#4A3822]">
+            ★ 25% of every Munchables purchase goes directly to shelter dog support programs.
+          </p>
+        </div>
+      </section>
+    </>
+  );
+}
+
+const MUNCHABLES_LINE = [
+  { name: 'Quackers', ingredient: 'Duck',         copy: 'Single-ingredient duck bites. High-protein, grain-free, and something your dog will absolutely lose their mind over.',    tags: ['High protein', 'Grain-free', 'Novel protein'] },
+  { name: 'Cluckers', ingredient: 'Chicken',      copy: 'Classic chicken strips, nothing else. The everyday treat that never gets old, from dogs who deserve the real thing.',     tags: ['Lean protein', 'Digestible', 'All ages'] },
+  { name: 'Gobbler',  ingredient: 'Turkey',       copy: 'Low-fat turkey bites perfect for training, rewarding, or just because your dog had a really good day.',                   tags: ['Low fat', 'Training treat', 'Sensitive stomachs'] },
+  { name: 'Mooers',   ingredient: 'Beef',         copy: 'Beef lung bites — chewy, satisfying, and packed with the nutrition that keeps tails wagging hard.',                       tags: ['Chewy', 'Rich flavor', 'High value reward'] },
+  { name: 'Swimmer',  ingredient: 'Salmon',       copy: 'Omega-3 packed salmon treats for coat health, brain function, and dogs who appreciate something from the deep end.',      tags: ['Omega-3', 'Coat health', 'Brain support'] },
+  { name: 'Rooters',  ingredient: 'Sweet Potato', copy: 'Plant-based sweet potato chews for dogs with sensitivities or owners who want a clean vegetarian option.',                tags: ['Vegetarian', 'Sensitivity-friendly', 'Fiber rich'] },
+];
+
+const INSTAGRAM_POSTS = [
+  { label: 'Shelter beds funded', caption: 'Q1 impact: 12 beds sponsored for dogs in active foster care. Your orders did that.' },
+  { label: 'Quackers are back', caption: 'New stock just dropped. Single-ingredient duck. One bag left your cart — one more dog got a treat.' },
+  { label: 'For April', caption: "Every product carries her forward. That's the whole point of this brand." },
+  { label: 'Good vibes save lives', caption: 'Not a slogan. A promise. We document every dollar so you can see it.' },
+  { label: 'Rescue spotlight', caption: 'Meet a dog who got a second chance because someone bought with purpose. Tag us in yours.' },
+  { label: 'Second Chance Collection', caption: 'New apparel drop is live. Wear the mission. Build the tribe.' },
+];
+
+const DONATION_LOG = [
+  {
+    period: 'Q1 2024',
+    item: '12 shelter beds',
+    org: 'Local rescue partners',
+    detail: 'Sponsored comfort bedding for 12 dogs in active foster care, funded through Second Chance Apparel sales.',
+  },
+  {
+    period: 'Q4 2023',
+    item: '8 enrichment toys',
+    org: 'County animal shelter',
+    detail: 'Wobbler-style enrichment tools donated to reduce stress in long-stay shelter dogs during the holiday surge.',
+  },
+  {
+    period: 'Q3 2023',
+    item: 'Emergency vet fund',
+    org: 'Independent rescue',
+    detail: 'Contributed to emergency medical care for a dog pulled from an urgent euthanasia situation.',
+  },
+];
+
+function LivesChangedPage({ navigate }) {
+  const log = DONATION_LOG;
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Lives changed"
+        title="Your support documented. No vague promises."
+        subtitle="Every donation this brand makes is logged and shared here. Dogs helped. Beds funded. Treatments covered. This is the proof of mission."
+        badge={{
+          title: 'Lives Changed',
+          eyebrow: 'Proof of impact',
+          highlight: 'Show the receipts',
+          copy: 'Accountability is how a mission-driven brand earns real trust. We document everything.',
+        }}
+      />
+      <MarqueeBand items={['Beds funded', 'Enrichment donated', 'Rescue support', 'Vet care', 'Show the receipts']} />
+
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <SectionHeader
+              eyebrow="Donation log"
+              title="Where your money actually went."
+              copy="Updated quarterly. Every entry is a real donation tied to a real product sale."
+            />
+            <button
+              onClick={() => navigate('shop')}
+              className="thhg-oswald shrink-0 border-2 border-[#1B2A4A] px-5 py-3 text-sm uppercase tracking-[0.18em] text-[#1B2A4A] transition hover:-translate-y-0.5"
+            >
+              Shop to add more →
+            </button>
+          </div>
+
+          <div className="grid gap-6">
+            {log.map(({ period, item, org, detail }) => (
+              <div key={period} className="grid overflow-hidden border border-[#D4B483] bg-white shadow-[0_10px_30px_rgba(15,26,46,0.05)] sm:grid-cols-[auto_1fr]">
+                <div className="border-b border-[#D4B483] bg-[linear-gradient(160deg,#0F1A2E,#1B2A4A)] p-6 sm:border-b-0 sm:border-r">
+                  <div className="thhg-oswald text-[10px] uppercase tracking-[0.22em] text-[#E8A83A]">Period</div>
+                  <div className="thhg-rye mt-2 text-xl text-[#F5EDD8]">{period}</div>
+                </div>
+                <div className="p-6">
+                  <div className="thhg-rye text-2xl text-[#1B2A4A]">{item}</div>
+                  <div className="thhg-oswald mt-1 text-xs uppercase tracking-[0.18em] text-[#B5282A]">{org}</div>
+                  <p className="thhg-baskerville mt-3 text-sm leading-7 text-[#4A3822]">{detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#F5EDD8] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <CardGrid
+            items={[
+              { eyebrow: 'What we fund', title: 'Shelter essentials',  copy: 'Beds, blankets, enrichment toys, and comfort items for dogs in active shelter care while they wait for their homes.',        cta: 'Support now', onCta: () => navigate('shop') },
+              { eyebrow: 'What we fund', title: 'Emergency vet care',  copy: 'When rescue partners pull dogs from urgent situations, we contribute to immediate veterinary needs.',                         cta: 'Support now', onCta: () => navigate('shop') },
+              { eyebrow: 'What we fund', title: 'Veteran programs',    copy: 'Dog-assisted healing programs for veterans. Because dogs heal people — and that healing is worth funding.',                    cta: 'Support now', onCta: () => navigate('shop') },
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* Instagram feed */}
+      <section className="bg-[#0F1A2E] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="thhg-oswald text-xs uppercase tracking-[0.28em] text-[#E8A83A]">Follow along</div>
+              <h2 className="thhg-rye mt-4 text-3xl text-[#F5EDD8] sm:text-4xl">@thehappyhuntinggrounds</h2>
+            </div>
+            <a
+              href="https://instagram.com/thehappyhuntinggrounds"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="thhg-shine thhg-oswald shrink-0 border-2 border-[#C8882A] px-5 py-3 text-sm uppercase tracking-[0.18em] text-[#F5EDD8] transition hover:-translate-y-0.5"
+            >
+              Follow on Instagram →
+            </a>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {INSTAGRAM_POSTS.map(({ label, caption }, i) => (
+              <a
+                key={i}
+                href="https://instagram.com/thehappyhuntinggrounds"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative aspect-square overflow-hidden"
+              >
+                <div className={`flex h-full w-full flex-col items-center justify-center p-3 ${
+                  i % 3 === 0 ? 'bg-[linear-gradient(160deg,#1B2A4A,#0F1A2E)]' :
+                  i % 3 === 1 ? 'bg-[linear-gradient(160deg,#6B1416,#3D0C0D)]' :
+                                'bg-[linear-gradient(160deg,#7A500F,#4A3008)]'
+                }`}>
+                  <div className="thhg-star-pop flex justify-center gap-1 text-[#C8882A] text-xs">
+                    <span>★</span><span>★</span><span>★</span>
+                  </div>
+                  <div className="thhg-logo-pop mt-3 h-12 w-12 overflow-hidden rounded-full border-2 border-[#C8882A] bg-[#F5EDD8]">
+                    <img src={brandLogo} alt="" className="h-full w-full object-cover" />
+                  </div>
+                  <div className="thhg-rye mt-3 text-center text-[11px] leading-tight text-[#F5EDD8]">{label}</div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-[#0F1A2E]/85 px-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  <p className="thhg-baskerville text-center text-[11px] leading-5 text-[#F5EDD8]">{caption}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ContactPage() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [sent, setSent] = useState(false);
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSent(true);
+  };
+
+  const inputClass = 'thhg-baskerville border border-[#D4B483] bg-white px-5 py-3 text-sm outline-none focus:border-[#1B2A4A]';
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Bark at us"
+        title="Let's connect. We're real people."
+        subtitle="Whether you want to collaborate, carry the brand, donate directly, or just say something — the door is open. We read everything."
+        badge={{
+          title: 'Contact',
+          eyebrow: "Let's connect",
+          highlight: 'Bark at us',
+          copy: 'No bots. No ticketing systems. Real people who care about the mission.',
+        }}
+      />
+      <section className="bg-[#FDFAF4] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="border-t-4 border-[#C8882A] bg-[#F5EDD8] p-8 shadow-[0_18px_50px_rgba(15,26,46,0.08)]">
+              <SectionHeader
+                eyebrow="Send a message"
+                title="We'd love to hear from you."
+                copy="Collaborations, wholesale, donations, rescue partnerships, community inquiries — all welcome."
+              />
+              {sent ? (
+                <div className="mt-8 border-t-4 border-[#C8882A] bg-white p-8 text-center">
+                  <div className="thhg-rye text-3xl text-[#1B2A4A]">Message sent. ★</div>
+                  <p className="thhg-baskerville mt-4 text-sm leading-7 text-[#4A3822]">
+                    We'll get back to you as soon as we can. Thanks for reaching out.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="mt-8 grid gap-4 sm:grid-cols-2">
+                  <input required value={form.name}    onChange={update('name')}    placeholder="Your name"    className={inputClass} />
+                  <input required type="email" value={form.email}   onChange={update('email')}   placeholder="Your email"   className={inputClass} />
+                  <input required value={form.subject} onChange={update('subject')} placeholder="Subject"       className={`${inputClass} sm:col-span-2`} />
+                  <textarea required value={form.message} onChange={update('message')} placeholder="Your message" rows={6} className={`${inputClass} sm:col-span-2`} />
+                  <button
+                    type="submit"
+                    className="thhg-shine thhg-oswald bg-[#B5282A] px-6 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-[#F5EDD8] sm:col-span-2"
+                  >
+                    Send message →
+                  </button>
+                </form>
+              )}
+            </div>
+
+            <div className="grid content-start gap-5">
+              {[
+                { title: 'Collaborations', copy: "Partner brands, shelters, rescues, events, or any organization aligned with the mission. Reach out and let's make something meaningful together." },
+                { title: 'Wholesale',      copy: "Independent pet stores, boutiques, or retailers who want to carry Munchables or Second Chance Apparel. We're open to the conversation." },
+                { title: 'Donate directly', copy: "Want to give directly to the mission without a product purchase? We can point you to the right place. Every dollar is documented." },
+                { title: 'Community',      copy: "Share a rescue story, spotlight a dog, or just say hi. The community is the brand and we love hearing from the people in it." },
+              ].map(({ title, copy }) => (
+                <div key={title} className="border border-[#D4B483] bg-white p-6 shadow-[0_10px_30px_rgba(15,26,46,0.05)]">
+                  <div className="thhg-rye text-xl text-[#1B2A4A]">{title}</div>
+                  <p className="thhg-baskerville mt-3 text-sm leading-7 text-[#4A3822]">{copy}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+// ─── Root ───────────────────────────────────────────────────────────────────────
+
+const PAGES = {
+  home:          (nav) => <HomePage          navigate={nav} />,
+  'our-story':   (nav) => <OurStoryPage      navigate={nav} />,
+  shop:          (nav) => <ShopPage          navigate={nav} />,
+  apparel:       (nav) => <ApparelPage       navigate={nav} />,
+  product:       (nav) => <ProductPage       navigate={nav} />,
+  'lives-changed': (nav) => <LivesChangedPage navigate={nav} />,
+  contact:       (nav) => <ContactPage       navigate={nav} />,
+};
+
+export default function THHGWebsite() {
+  const [currentPage, setCurrentPage] = useState('home');
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  const navigate = useCallback((id) => setCurrentPage(id), []);
+
+  const render = PAGES[currentPage] ?? PAGES.home;
+
+  return (
+    <SiteShell currentPage={currentPage} navigate={navigate}>
+      {render(navigate)}
+    </SiteShell>
+  );
+}

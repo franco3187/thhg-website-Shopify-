@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Large media files
+*.mov
+*.MOV
+*.mp4
+*.MP4
+
+# Node
+node_modules/
+
+# Build output
+dist/
+
+# Vite
+.vite/
